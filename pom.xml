@@ -8,7 +8,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>24</maven.compiler.release>
-        <exec.mainClass>com.mycompany.principleexample.PrincipleExample</exec.mainClass>
+        <exec.mainClass>cardgame</exec.mainClass>
     </properties>
     <name>Blackjack</name>
 </project>
