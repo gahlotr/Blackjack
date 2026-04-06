@@ -2,31 +2,33 @@ package ca.sheridancollege.project;
 
 public class Bet {
 
-	private double amount;
-	private boolean isWon;
+    private double amount; // Bet amount
+    private boolean isWon; // Player win or lose
 
-	public double getAmount() {
-		return this.amount;
-	}
+    //Constructor for Bet. Triggers when new BET() created
+    public Bet(double amount) {
+        this.amount = amount;
+        this.isWon = false; // False, because game not over yet
+    }
 
-	/**
-	 * 
-	 * @param amount
-	 */
-	public void setAmount(double amount) {
-		this.amount = amount;
-	}
+    // Getter: return the amount bet
+    public double getAmount() {
+        return amount;
+    }
 
-	public boolean getIsWon() {
-		return this.isWon;
-	}
+    // Setter: set bet
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
 
-	/**
-	 * 
-	 * @param isWon
-	 */
-	public void setIsWon(boolean isWon) {
-		this.isWon = isWon;
-	}
+    // Getter: return true if this bet was won
+    public boolean getIsWon() {
+        return isWon;
+    }
 
+    // Setter: set isWon true if the bet was won
+
+    public void setIsWon(boolean isWon) {
+        this.isWon = isWon;
+    }
 }
