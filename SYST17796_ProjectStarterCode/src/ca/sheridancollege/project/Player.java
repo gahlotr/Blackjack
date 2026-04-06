@@ -12,26 +12,23 @@ package ca.sheridancollege.project;
  */
 public abstract class Player {
 
-    private String name; // the unique name for this player
+    private String name; // Players name
 
-    // constructor that allows you to set the player's unique name.
+    // Assigning the name
     public Player(String name) {
         this.name = name;
     }
 
-    // getter that returns the player name
+    // Getter: return the player name
     public String getName() {
         return name;
     }
 
-    // setter to set the players name
+    // Setter: erase and rewrite the name
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * Anyone can call play(), but this class doesn't define what it does
-     * subclasses must implement it themselves, and it returns nothing.
-     */
+    // every player must know how to play
     public abstract void play();
 }
