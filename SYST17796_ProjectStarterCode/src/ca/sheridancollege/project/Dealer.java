@@ -36,7 +36,7 @@ public class Dealer extends BlackjackPlayer {
         hiddenCardRevealed = false;
     }
 
-    // Handled by Blackjack game controller (drawUntilStand logic)
+    
     @Override
     public void play() {
     }

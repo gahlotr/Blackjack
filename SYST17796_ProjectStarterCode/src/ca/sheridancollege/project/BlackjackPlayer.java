@@ -55,4 +55,8 @@ public class BlackjackPlayer extends Player {
 		this.bet = bet;
 	}
 
+    void resetHand() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }
