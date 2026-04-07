@@ -61,7 +61,6 @@ public class BlackjackPlayer extends Player {
     }
 
     // Setter: set player's bet
-     */
     public void setBet(Bet bet) {
         this.bet = bet;
     }
@@ -84,5 +83,60 @@ public class BlackjackPlayer extends Player {
     // Setter: set hasBlackjack true if the player has Blackjack
     public void setHasBlackjack(boolean hasBlackjack) {
         this.hasBlackjack = hasBlackjack;
+    }
+
+    //Adds a card to player's hand and recalculates the score.
+    public void addCard(PlayingCard card) {
+        hand.add(card);
+        calculateScore();
+    }
+
+    // Calculates the hand score: Each Ace initially counted as 11; if the total 
+    // exceeds 21, one Ace at a time is reduced to 1.
+
+    public void calculateScore() {
+        int total = 0;
+        int aceCount = 0;
+
+        for (PlayingCard card : hand) {
+            total += card.getRank().getValue();
+            if (card.getRank() == Rank.ACE) {
+                aceCount++;
+            }
+        }
+
+        // Reduce Aces from 11 to 1 as needed to avoid bust
+        while (total > 21 && aceCount > 0) {
+            total -= 10;
+            aceCount--;
+        }
+
+        this.score = total;
+        this.isBust = (total > 21);
+    }
+
+    //Clears the player's hand, resets score, bust, and blackjack flags for a new round.
+    public void resetHand() {
+        hand.clear();
+        score = 0;
+        isBust = false;
+        hasBlackjack = false;
+        bet = null;
+    }
+
+    // Returns a formatted string showing all cards in the player's hand.
+    public String handToString() {
+        String result = "";
+        for (int i = 0; i < hand.size(); i++) {
+            result = result + hand.get(i).toString();
+            if (i < hand.size() - 1) {
+                result = result + ", ";
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void play() {
     }
 }
