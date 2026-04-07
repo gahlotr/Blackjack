@@ -98,12 +98,12 @@ public class BlackjackPlayer extends Player {
         int total = 0;
         int aceCount = 0;
 
-        for (PlayingCard card : hand) {
-            total += card.getRank().getValue();
-            if (card.getRank() == Rank.ACE) {
-                aceCount++;
-            }
-        }
+//        for (PlayingCard card : hand) {
+//            total += card.getRank().get();
+//            if (card.getRank() == Rank.ACE) {
+//                aceCount++;
+//            }
+//        }
 
         // Reduce Aces from 11 to 1 as needed to avoid bust
         while (total > 21 && aceCount > 0) {

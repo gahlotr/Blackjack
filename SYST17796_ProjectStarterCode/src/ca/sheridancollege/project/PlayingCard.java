@@ -45,5 +45,9 @@ public class PlayingCard extends Card {
 	public void setValue(int value) {
 		this.value = value;
 	}
-
+        
+        @Override
+        public String toString() {
+                return "";
+        }    
 }
