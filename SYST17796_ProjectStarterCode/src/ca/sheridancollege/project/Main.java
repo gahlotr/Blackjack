@@ -4,10 +4,15 @@
  */
 package ca.sheridancollege.project;
 
+
+/**
+ *
+ * @author Group 2 - Bruins (Ria Gahlot, Madison Scarlett, Rayyan Javed, John Michael Lagumbay)
+ */
 public class Main {
+
     public static void main(String[] args) {
-        Blackjack game = new Blackjack();
+        Blackjack game = new Blackjack();   
         game.play();
     }
-    
 }
