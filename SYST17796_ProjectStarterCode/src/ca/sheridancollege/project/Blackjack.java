@@ -53,14 +53,40 @@ public class Blackjack extends Game {
 
         // registering players
         PlayerRegistration registration = registerPlayers();
-        ArrayList<BlackjackPlayer> blackjackPlayers = registration.getPlayers();
+        ArrayList<BlackjackPlayer> players = registration.getPlayers();
 
         // adding players and setting players in Game's player list
         ArrayList<Player> playerList = new ArrayList<>();
-        for (BlackjackPlayer p : blackjackPlayers) {
+        for (BlackjackPlayer p : players) {
             playerList.add(p);
         }
         setPlayers(playerList);
+        
+        // collects each player's bets
+        collectBets(players);
+
+        // deals cards to each player
+        dealInitialCards(players);
+
+        // displays each player's hands after cards are dealt
+        displayInitialHands(players);
+
+        // checks if each player's hand is blackjack
+        checkInitialBlackjacks(players);
+
+        // iterate through players so each player with a valid score has a turn
+        for (BlackjackPlayer player : players) {
+            if (!player.hasBlackjack() && !player.isBust()) {
+                playerTurn(player);
+            }
+        }
+        
+        // checks dealer's hidden card and determines score of dealer's hand
+        // passing list of players to check if all player's have busted
+        dealerTurn(players);
+
+        // determining outcome of game
+        declareWinner();
         
     }
 
@@ -73,12 +99,11 @@ public class Blackjack extends Game {
         PlayerRegistration registration = new PlayerRegistration();
 
         // prompting user for number of players
-        Scanner in = new Scanner(System.in);
         int numPlayers = 0;
         while (numPlayers < 1 || numPlayers > 4) {
             System.out.print("\nEnter number of players (1-4): ");
             // reading input as String to prevent errors if non-numerical input entered
-            String input = in.nextLine();
+            String input = scanner.nextLine();
             // validating input
             if (isNumeric(input)) {
                 numPlayers = Integer.parseInt(input);
@@ -96,7 +121,7 @@ public class Blackjack extends Game {
             boolean isValidName = false;
             while (!isValidName) {
                 System.out.print("Enter name for Player " + i + ": ");
-                name = in.nextLine();
+                name = scanner.nextLine();
                 // validating name entered
                 if (name.isEmpty()) {
                     System.out.println("Name cannot be blank. Please enter a name.");
@@ -118,6 +143,12 @@ public class Blackjack extends Game {
     // ensuring input entered is a valid numerical value
     private boolean isNumeric(String input) {
         
+        // null or empty input is invalid
+        if (input == null || input.length() == 0) {
+            return false;
+        }
+        
+        // checking that input is a proper positive, numerical value
         boolean hasDigit = false;
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
@@ -128,7 +159,6 @@ public class Blackjack extends Game {
                 return false;
             }
         }
-        // input is valid
         return hasDigit;
     }
     
@@ -221,9 +251,198 @@ public class Blackjack extends Game {
    
     //RIA
     
+
+    // draws card from top of deck if deck is not empty
+    // deck is rebuilt and reshuffled if empty
+    private PlayingCard drawCard() {
+        if (deck.isEmpty()) {
+            System.out.println("\nDeck is empty");
+            System.out.println("Reshuffling...");
+
+            buildAndShuffleDeck();
+        }
+        PlayingCard card = (PlayingCard) deck.dealCard();
+
+        return card;
+    }
+
+    // displaying each player's hand and score after cards are intially dealt,
+    // displaying dealer's visible card
+    private void displayInitialHands(ArrayList<BlackjackPlayer> players) {
+        System.out.println("\n-- Current Hands --");
+        for (BlackjackPlayer player : players) {
+            System.out.printf("%s: %s  (Score: %d)%n",
+                    player.getName(), player.handToString(), player.getScore());
+        }
+        System.out.println("Dealer: " + dealer.getVisibleHandString());
+    }
+
+    
+    // checking each player's hand for Blackjack after initial cards are dealt
+    // marks player as has blackjack to skip that player's turn
+    private void checkInitialBlackjacks(ArrayList<BlackjackPlayer> players) {
+        for (BlackjackPlayer player : players) {
+            // player has blackjack if score is 21
+            if (player.getScore() == 21) {
+                player.setHasBlackjack(true);
+                System.out.println("\n" + player.getName() + " has BLACKJACK!");
+            }
+        }
+    }
+
+    // prompting player to hit or stand until player stands
+    // determining outcome of player's hand (bust or blackjack) based on card drawn
+    private void playerTurn(BlackjackPlayer player) {
+        System.out.println("\n-- " + player.getName() + "'s Turn --");
+
+        boolean isTurnOver = false;
+        while (!isTurnOver) {
+            System.out.printf("%s's hand: %s  (Score: %d)%n",
+                    player.getName(), player.handToString(), player.getScore());
+            System.out.print("Hit or Stand? (h/s): ");
+            String input = scanner.nextLine().trim().toLowerCase();
+
+            // dealing another card if player wants to draw
+            if (input.equals("h") || input.equals("hit")) {
+                PlayingCard newCard = drawCard();
+                player.addCard(newCard);
+                System.out.println("  Dealt: " + newCard);
+
+                // determining if player busted or has blackjack
+                if (player.getScore() > 21) {
+                    System.out.println("  Bust! " + player.getName() + " exceeded 21 with " + player.getScore());
+                    isTurnOver = true;
+                } else if (player.getScore() == 21) {
+                    System.out.println("  " + player.getName() + " reached 21!");
+                    isTurnOver = true;
+                }
+
+            // player's turn is over if player does not want to draw
+            } else if (input.equals("s") || input.equals("stand")) {
+                System.out.println("  " + player.getName() + " stands at " + player.getScore() + ".");
+                isTurnOver = true;
+            } else {
+                System.out.println("  Invalid input. Please type 'h' to hit or 's' to stand.");
+            }
+        }
+    }
+    
+    // dealer's hidden card is revealed and score is determined
+    // dealer hits until reaching a score of at least 17
+    // if all players have busted, dealer's card is still revealed,
+    // but dealer does not draw any cards
+    private void dealerTurn(ArrayList<BlackjackPlayer> players) {
+        System.out.println("\n-- Dealer's Turn --");
+        dealer.setHiddenCardRevealed(true);
+        System.out.println("Dealer reveals hidden card: " + dealer.getHand().get(1));
+        System.out.printf("Dealer's hand: %s  (Score: %d)%n",
+                dealer.handToString(), dealer.getScore());
+
+        // checking if dealer's initial cards add to 21 for blackjack
+        if (dealer.getScore() == 21 && dealer.getHand().size() == 2) {
+            dealer.setHasBlackjack(true);
+            System.out.println("Dealer has BLACKJACK!");
+            return;
+        }
+
+        // checking if all players have busted
+        // dealer's card is still revealed, but dealer does not draw cards
+        boolean allBusted = true;
+        for (BlackjackPlayer p : players) {
+            if (!p.isBust()) {
+                allBusted = false;
+                break;
+            }
+        }
+
+        if (allBusted) {
+            System.out.println("All players busted. Dealer does not draw further.");
+            return;
+        }
+
+        // dealer draws cards until score is higher than 17
+        while (dealer.getScore() < 17) {
+            PlayingCard card = drawCard();
+            dealer.addCard(card);
+            System.out.println("  Dealer hits: " + card + "  (Score: " + dealer.getScore() + ")");
+        }
+
+        if (dealer.isBust()) {
+            System.out.println("  Dealer busts with " + dealer.getScore() + "!");
+        } else {
+            System.out.println("  Dealer stands at " + dealer.getScore() + ".");
+        }
+    }
+    
+    // compares dealer's score with each player's score
+    // bets are paid according to winner
+    // if dealer and player have the same score (push), player bet is returned
     @Override
     public void declareWinner() {
-        
+        System.out.println("\nRESULTS");
+
+        int dealerScore = dealer.getScore();
+
+        ArrayList<Player> allPlayers = getPlayers();
+        for (Player p : allPlayers) {
+            BlackjackPlayer player = (BlackjackPlayer) p;
+            double betAmount = player.getBet().getAmount();
+            String result;
+
+            // player busted
+            if (player.isBust()) {
+                result = "BUST - You lose $" + betAmount;
+                player.getBet().setIsWon(false);
+
+            // dealer busted, player did not bust
+            } else if (dealer.isBust()) {
+                player.setBalance(player.getBalance() + betAmount * 2);
+                player.getBet().setIsWon(true);
+                result = "DEALER BUSTS - You win $" + betAmount + "!";
+
+            // player has blackjack, dealer does not have blackjack
+            } else if (player.hasBlackjack() && !dealer.hasBlackjack()) {
+                double winnings = betAmount + (betAmount * 1.5);
+                player.setBalance(player.getBalance() + winnings);
+                player.getBet().setIsWon(true);
+                result = "BLACKJACK! You win $" + betAmount * 1.5 + " bonus!";
+
+            // both dealer and player have blackjack (push)
+            } else if (player.hasBlackjack() && dealer.hasBlackjack()) {
+                // player bet is returned
+                player.setBalance(player.getBalance() + betAmount);
+                result = "PUSH (both Blackjack) - Bet returned.";
+
+            //  dealer has blackjack, player does not have blackjack
+            } else if (dealer.hasBlackjack() && !player.hasBlackjack()) {
+                result = "DEALER BLACKJACK - You lose $" + betAmount + ".";
+
+            // player's score is higher than the dealer's score
+            } else if (player.getScore() > dealerScore) {
+                player.setBalance(player.getBalance() + betAmount * 2);
+                player.getBet().setIsWon(true);
+                result = "You WIN $" + betAmount + "!";
+
+            // player and dealer scores are the same (push)
+            } else if (player.getScore() == dealerScore) {
+                // player bet is returned
+                player.setBalance(player.getBalance() + betAmount);
+                result = "PUSH - Bet returned.";
+
+            // dealer's score is higher than player's score
+            } else {
+                result = "Dealer wins - You lose $" + betAmount + ".";
+            }
+
+            // displaying formatted results of player and dealer's hands,
+            // outcome of game scores, and bets lost or returned
+            System.out.println("------------------------------------------");
+            System.out.printf("Player  : %s%n", player.getName());
+            System.out.printf("Hand    : %s  (Score: %d)%n", player.handToString(), player.getScore());
+            System.out.printf("Dealer  : %s  (Score: %d)%n", dealer.handToString(), dealerScore);
+            System.out.printf("Result  : %s%n", result);
+            System.out.printf("Balance : $%.2f%n", player.getBalance());
+        }
     }
     
 }

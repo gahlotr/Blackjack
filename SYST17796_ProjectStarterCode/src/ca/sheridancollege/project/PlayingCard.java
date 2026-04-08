@@ -23,12 +23,10 @@ public class PlayingCard extends Card {
 
     /**
      * Returns the Blackjack value of the card.
-     * Face cards are 10, Aces are 1
+     * Face cards are 10, Aces are 11
      */
     public int getValue() {
         switch (rank) {
-            case ACE: 
-                return 1;
             case TWO: 
                 return 2;
             case THREE: 
@@ -49,6 +47,8 @@ public class PlayingCard extends Card {
             case JACK:
             case QUEEN:
             case KING: return 10;
+            case ACE: 
+                return 11;
             default: return 0;
         }
     }

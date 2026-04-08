@@ -41,6 +41,11 @@ public class GroupOfCards {
         }
         return cards.remove(0);
     }
+    
+    //return true if there are no cards remaining in this group
+    public boolean isEmpty() {
+        return cards.isEmpty();
+    }
 
     /**
      * Builds a standard 52-card deck using PlayingCard objects
@@ -59,6 +64,7 @@ public class GroupOfCards {
     public int currentSize() {
         return cards.size();
     }
+    
 }
 
 
