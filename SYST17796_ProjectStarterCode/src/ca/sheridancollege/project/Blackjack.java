@@ -13,7 +13,6 @@ public class Blackjack extends Game {
         private static final double MAX_BET = 100.0;
         
         private Scanner scanner;
-        private ArrayList<BlackjackPlayer> activePlayers;
         
         public Blackjack() {
             super("Blackjack");
@@ -53,40 +52,33 @@ public class Blackjack extends Game {
 
         // registering players
         PlayerRegistration registration = registerPlayers();
-        ArrayList<BlackjackPlayer> players = registration.getPlayers();
+        ArrayList<BlackjackPlayer> bjPlayers = registration.getPlayers();
 
         // adding players and setting players in Game's player list
         ArrayList<Player> playerList = new ArrayList<>();
-        for (BlackjackPlayer p : players) {
+        for (BlackjackPlayer p : bjPlayers) {
             playerList.add(p);
         }
         setPlayers(playerList);
         
-        // collects each player's bets
-        collectBets(players);
+        //build and shuffle the deck once at the start
+        buildAndShuffleDeck();
+        
+        // Step 2: Game loop — each iteration is one full round
+        boolean playAgain = true;
+        while (playAgain) {
+            playRound(bjPlayers);
+            playAgain = askPlayAgain();
 
-        // deals cards to each player
-        dealInitialCards(players);
-
-        // displays each player's hands after cards are dealt
-        displayInitialHands(players);
-
-        // checks if each player's hand is blackjack
-        checkInitialBlackjacks(players);
-
-        // iterate through players so each player with a valid score has a turn
-        for (BlackjackPlayer player : players) {
-            if (!player.hasBlackjack() && !player.isBust()) {
-                playerTurn(player);
+            // Remove players who are broke
+            removeBrokePlayers(bjPlayers);
+            if (bjPlayers.isEmpty()) {
+                System.out.println("\nAll players are out of funds. Game over!");
+                break;
             }
         }
-        
-        // checks dealer's hidden card and determines score of dealer's hand
-        // passing list of players to check if all player's have busted
-        dealerTurn(players);
 
-        // determining outcome of game
-        declareWinner();
+        System.out.println("\nThanks for playing Blackjack! Goodbye.");
         
     }
 
@@ -139,30 +131,96 @@ public class Blackjack extends Game {
 
         return registration;
     }
-    
-    // ensuring input entered is a valid numerical value
-    private boolean isNumeric(String input) {
+     //MADISON
+    //will run a single round of Blackjack as follows: betting, dealing, player turns, dealer turn, determine outcomes, payout
+    private void playRound(ArrayList<BlackjackPlayer> bjPlayers) {
+        System.out.println("-- New Round --");
         
-        // null or empty input is invalid
+
+        //reset all hands for the new round
+        for (BlackjackPlayer p : bjPlayers) {
+            p.resetHand();
+        }
+        dealer.resetHand();
+
+        // collect bets
+        collectBets(bjPlayers);
+
+        //shuffle deck if needed, then deal 2 cards to each player and dealer
+        dealInitialCards(bjPlayers);
+
+        //display hands
+        displayInitialHands(bjPlayers);
+
+        //check for Blackjack on initial deal
+        checkInitialBlackjacks(bjPlayers);
+
+        //player turns
+        for (BlackjackPlayer player : bjPlayers) {
+            if (!player.hasBlackjack() && !player.isBust()) {
+                playerTurn(player);
+            }
+        }
+
+        //dealer reveals hidden card and draws
+        dealerTurn(bjPlayers);
+
+        //determine outcomes and display results
+        declareWinner();
+    }
+    
+    
+    //asks players if they want to play another round
+    private boolean askPlayAgain() {
+        while (true) {
+            System.out.print("\nWould you like to play again? (yes / no): ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("yes") || input.equals("y")) {
+                return true;
+            } else if (input.equals("no") || input.equals("n")) {
+                return false;
+            } else {
+                System.out.println("Please type 'yes' or 'no'.");
+            }
+        }
+    }
+    
+    
+    //ensuring input entered is a valid positive number with up to 2 decimal places
+    private boolean isNumeric(String input) {
         if (input == null || input.length() == 0) {
             return false;
         }
-        
-        // checking that input is a proper positive, numerical value
         boolean hasDigit = false;
+        boolean hasDecimal = false;
+        int decimalPlaces = 0;
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if (Character.isDigit(c)) {
                 hasDigit = true;
+                //count decimal places if after the decimal point
+                if (hasDecimal) {
+                    decimalPlaces++;
+                    if (decimalPlaces > 2) {
+                        return false; //more than 2 decimal places
+                    }
+                }
+            } else if (c == '.') {
+                if (hasDecimal) {
+                    return false; //more than one decimal inputted
+                }
+                hasDecimal = true;
+                //the decimal can't be first or last
+                if (i == 0 || i == input.length() - 1) {
+                    return false;
+                }
             } else {
-                // character is not a digit
-                return false;
+                return false; // invalid character
             }
         }
         return hasDigit;
     }
-    
-    //MADISON
+
     
     private void collectBets(ArrayList<BlackjackPlayer> bjPlayers) {
         System.out.println("\n-- Placing Bets --");
@@ -186,7 +244,7 @@ public class Blackjack extends Game {
                         validBet = true;
                     }
                 } else {
-                    System.out.println("Invalid input. Please enter a numeric amount.");
+                    System.out.println("Invalid input. Please enter a postive number.");
                 }
             }
 
@@ -201,56 +259,27 @@ public class Blackjack extends Game {
         deck.buildDeck();
         deck.shuffle();
 
-        //removes any cards currently held in players or dealer hands
-        //that way the reshuffled deck does not contain duplicates of in-use cards
-        if (activePlayers != null) {
-            for (BlackjackPlayer player : activePlayers) {
-                for (PlayingCard inHand : player.getHand()) {
-                    removeCardFromDeck(inHand);
-                }
-            }
-        }
-        if (dealer != null) {
-            for (PlayingCard inHand : dealer.getHand()) {
-                removeCardFromDeck(inHand);
-            }
-        }
-
         System.out.println("\nDeck shuffled.");
     }
+ 
+    private void dealInitialCards(ArrayList<BlackjackPlayer> players) {
+        System.out.println("\n-- Dealing Cards --");
 
-    //looks through the deck and removes the first card that matches the one passed in
-    //used to make sure cards already in someone’s hand aren’t still in the deck
-    private void removeCardFromDeck(PlayingCard target) {
-        ArrayList<Card> cards = deck.getCards();
-        for (int i = 0; i < cards.size(); i++) {
-            PlayingCard c = (PlayingCard) cards.get(i);
-            if (c.getSuit() == target.getSuit() && c.getRank() == target.getRank()) {
-                cards.remove(i);
-                return;
+        //do two rounds so everyone ends up with 2 cards
+        //each round: every player gets one card, then the dealer gets one
+        for (int round = 0; round < 2; round++) {
+            for (BlackjackPlayer player : players) {
+                PlayingCard card = drawCard();
+                player.addCard(card);
             }
+
+            // Dealer also gets one card per round
+            PlayingCard dealerCard = drawCard();
+            dealer.addCard(dealerCard);
         }
     }
-    
-//    private void dealInitialCards(ArrayList<BlackjackPlayer> players) {
-//        System.out.println("\n-- Dealing Cards --");
-//
-//        //do two rounds so everyone ends up with 2 cards
-//        //each round: every player gets one card, then the dealer gets one
-//        for (int round = 0; round < 2; round++) {
-//            for (BlackjackPlayer player : players) {
-//                PlayingCard card = drawCard();
-//                player.addCard(card);
-//            }
-//
-//            // Dealer also gets one card per round
-//            PlayingCard dealerCard = drawCard();
-//            dealer.addCard(dealerCard);
-//        }
-//    }
    
     //RIA
-    
 
     // draws card from top of deck if deck is not empty
     // deck is rebuilt and reshuffled if empty
@@ -443,6 +472,27 @@ public class Blackjack extends Game {
             System.out.printf("Result  : %s%n", result);
             System.out.printf("Balance : $%.2f%n", player.getBalance());
         }
+    }
+  
+    //MADISON
+    //removes any players where the balance has dropped to $0
+    private void removeBrokePlayers(ArrayList<BlackjackPlayer> bjPlayers) {
+        for (int i = 0; i < bjPlayers.size(); i++) {
+            BlackjackPlayer p = bjPlayers.get(i);
+
+            if (p.getBalance() <= 0) {
+                System.out.println(p.getName() + " has run out of funds and is out of the game.");
+                bjPlayers.remove(i);
+                i--; //adjusts index after removal to not skip elements
+            }
+        }
+
+        //sync Game.java player list
+        ArrayList<Player> playerList = new ArrayList<>();
+        for (int i = 0; i < bjPlayers.size(); i++) {
+            playerList.add(bjPlayers.get(i));
+        }
+        setPlayers(playerList);
     }
     
 }
