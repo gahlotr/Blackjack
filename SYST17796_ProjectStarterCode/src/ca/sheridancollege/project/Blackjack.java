@@ -232,22 +232,22 @@ public class Blackjack extends Game {
         }
     }
     
-    private void dealInitialCards(ArrayList<BlackjackPlayer> players) {
-        System.out.println("\n-- Dealing Cards --");
-
-        //do two rounds so everyone ends up with 2 cards
-        //each round: every player gets one card, then the dealer gets one
-        for (int round = 0; round < 2; round++) {
-            for (BlackjackPlayer player : players) {
-                PlayingCard card = drawCard();
-                player.addCard(card);
-            }
-
-            // Dealer also gets one card per round
-            PlayingCard dealerCard = drawCard();
-            dealer.addCard(dealerCard);
-        }
-    }
+//    private void dealInitialCards(ArrayList<BlackjackPlayer> players) {
+//        System.out.println("\n-- Dealing Cards --");
+//
+//        //do two rounds so everyone ends up with 2 cards
+//        //each round: every player gets one card, then the dealer gets one
+//        for (int round = 0; round < 2; round++) {
+//            for (BlackjackPlayer player : players) {
+//                PlayingCard card = drawCard();
+//                player.addCard(card);
+//            }
+//
+//            // Dealer also gets one card per round
+//            PlayingCard dealerCard = drawCard();
+//            dealer.addCard(dealerCard);
+//        }
+//    }
    
     //RIA
     
