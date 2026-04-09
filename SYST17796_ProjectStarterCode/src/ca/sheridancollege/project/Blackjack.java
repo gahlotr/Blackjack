@@ -3,6 +3,8 @@ package ca.sheridancollege.project;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+// @author Ria Gahlot, Madison Scarlett
+
 public class Blackjack extends Game {
 
 	private GroupOfCards deck;
@@ -374,8 +376,8 @@ public class Blackjack extends Game {
             return;
         }
 
-        // checking if all players have busted
-        // dealer's card is still revealed, but dealer does not draw cards
+        //checking if all players have busted
+        //dealer's card is still revealed, but dealer does not draw cards
         boolean allBusted = true;
         for (BlackjackPlayer p : players) {
             if (!p.isBust()) {
@@ -389,7 +391,7 @@ public class Blackjack extends Game {
             return;
         }
 
-        // dealer draws cards until score is higher than 17
+        //dealer draws cards until score is higher than 17
         while (dealer.getScore() < 17) {
             PlayingCard card = drawCard();
             dealer.addCard(card);
@@ -403,9 +405,9 @@ public class Blackjack extends Game {
         }
     }
     
-    // compares dealer's score with each player's score
-    // bets are paid according to winner
-    // if dealer and player have the same score (push), player bet is returned
+    //compares dealer's score with each player's score
+    //bets are paid according to winner
+    //if dealer and player have the same score (push), player bet is returned
     @Override
     public void declareWinner() {
         System.out.println("\nRESULTS");
@@ -418,59 +420,90 @@ public class Blackjack extends Game {
             double betAmount = player.getBet().getAmount();
             String result;
 
-            // player busted
+            //player busted
             if (player.isBust()) {
                 result = "BUST - You lose $" + betAmount;
                 player.getBet().setIsWon(false);
 
-            // dealer busted, player did not bust
+                //dealer busted, player did not bust
             } else if (dealer.isBust()) {
                 player.setBalance(player.getBalance() + betAmount * 2);
                 player.getBet().setIsWon(true);
                 result = "DEALER BUSTS - You win $" + betAmount + "!";
 
-            // player has blackjack, dealer does not have blackjack
+                //player has blackjack, dealer does not have blackjack
             } else if (player.hasBlackjack() && !dealer.hasBlackjack()) {
                 double winnings = betAmount + (betAmount * 1.5);
                 player.setBalance(player.getBalance() + winnings);
                 player.getBet().setIsWon(true);
                 result = "BLACKJACK! You win $" + betAmount * 1.5 + " bonus!";
 
-            // both dealer and player have blackjack (push)
+                //both dealer and player have blackjack (push)
             } else if (player.hasBlackjack() && dealer.hasBlackjack()) {
-                // player bet is returned
                 player.setBalance(player.getBalance() + betAmount);
                 result = "PUSH (both Blackjack) - Bet returned.";
 
-            //  dealer has blackjack, player does not have blackjack
+                //dealer has blackjack, player does not have blackjack
             } else if (dealer.hasBlackjack() && !player.hasBlackjack()) {
                 result = "DEALER BLACKJACK - You lose $" + betAmount + ".";
 
-            // player's score is higher than the dealer's score
+                //player's score is higher than the dealer's score
             } else if (player.getScore() > dealerScore) {
                 player.setBalance(player.getBalance() + betAmount * 2);
                 player.getBet().setIsWon(true);
                 result = "You WIN $" + betAmount + "!";
 
-            // player and dealer scores are the same (push)
+                //player and dealer scores are the same (push)
             } else if (player.getScore() == dealerScore) {
-                // player bet is returned
                 player.setBalance(player.getBalance() + betAmount);
                 result = "PUSH - Bet returned.";
 
-            // dealer's score is higher than player's score
+                //dealer's score is higher than player's score
             } else {
                 result = "Dealer wins - You lose $" + betAmount + ".";
             }
 
-            // displaying formatted results of player and dealer's hands,
-            // outcome of game scores, and bets lost or returned
             System.out.println("------------------------------------------");
             System.out.printf("Player  : %s%n", player.getName());
             System.out.printf("Hand    : %s  (Score: %d)%n", player.handToString(), player.getScore());
             System.out.printf("Dealer  : %s  (Score: %d)%n", dealer.handToString(), dealerScore);
             System.out.printf("Result  : %s%n", result);
             System.out.printf("Balance : $%.2f%n", player.getBalance());
+        }
+
+        //compare players against each other and show round winner
+        int highestScore = -1;
+        ArrayList<BlackjackPlayer> roundWinners = new ArrayList<>();
+
+        for (Player p : allPlayers) {
+            BlackjackPlayer player = (BlackjackPlayer) p;
+
+            if (!player.isBust()) {
+                if (player.getScore() > highestScore) {
+                    highestScore = player.getScore();
+                    roundWinners.clear();
+                    roundWinners.add(player);
+                } else if (player.getScore() == highestScore) {
+                    roundWinners.add(player);
+                }
+            }
+        }
+
+        System.out.println("------------------------------------------");
+        if (roundWinners.isEmpty()) {
+            System.out.println("Round Winner: Dealer won the round because all players busted.");
+        } else if (roundWinners.size() == 1) {
+            System.out.println("Round Winner: " + roundWinners.get(0).getName()
+                    + " with a score of " + highestScore + "!");
+        } else {
+            System.out.print("Round Winners: ");
+            for (int i = 0; i < roundWinners.size(); i++) {
+                System.out.print(roundWinners.get(i).getName());
+                if (i < roundWinners.size() - 1) {
+                    System.out.print(", ");
+                }
+            }
+            System.out.println(" tied with a score of " + highestScore + "!");
         }
     }
   
